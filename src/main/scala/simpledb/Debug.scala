@@ -26,5 +26,5 @@ object Debug {
   def isEnabled() : Boolean = isEnabled(DEFAULT_LEVEL)
 
   /** Logs message at the default log level. */
-  def log(message: String, args: Any*) = log(DEFAULT_LEVEL, message, args)
+  def log(message: String, args: Any*) : Unit = log(DEFAULT_LEVEL, message, args)
 }

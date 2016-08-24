@@ -4,7 +4,7 @@ package simpledb
   * Private constructor with two static objects READ_ONLY and READ_WRITE that
   * represent the two levels of permission.
   */
-private class Permissions(val permLevel: Int) {
+class Permissions private (val permLevel: Int) {
   override def toString: String = permLevel match {
     case 0 => "READ_ONLY"
     case 1 => "READ_WRITE"
