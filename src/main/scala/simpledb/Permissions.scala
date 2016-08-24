@@ -1,4 +1,4 @@
-package simpledb;
+package simpledb
 
 /** Class representing requested permissions to a relation/title.
   * Private constructor with two static objects READ_ONLY and READ_WRITE that
