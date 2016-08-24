@@ -4,6 +4,7 @@ import simpledb.Predicate.OP.OP
 
 /** Predicate compares tuples to a specified Field value.
   *
+  * @constructor Constructor.
   * @param field field number of passed in tuples to compare against.
   * @param op operation to use for comparison.
   * @param operand field value to compare passed in tuples to.
@@ -37,7 +38,7 @@ object Predicate {
   /** Constants used for return codes in Fields.compare */
   object OP extends Enumeration {
     type OP = Value
-    val EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, NOT_EQUALS = Value
+    val EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, LIKE, NOT_EQUALS = Value
   }
 
   /** Interface to access operations by a string containing an integer
