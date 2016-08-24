@@ -20,7 +20,7 @@ class Predicate(val field: Int, val op: OP, operand: Field) {
     * @param t The tuple to compare against
     * @return true if the comparison is true, false otherwise.
     */
-  def filter(t: Tuple) : Boolean = {
+  def filter(t: Tuple): Boolean = {
     // TODO
     false
   }
