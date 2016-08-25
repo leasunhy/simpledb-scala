@@ -39,7 +39,7 @@ class Catalog {
     * @param tableId The id of the table, as specified by the DbFile.getId()
     *     function passed to addTable
     */
-  def getTupleDesc(tableId: Int) = ???
+  def getTupleDesc(tableId: Int): TupleDesc = ???
 
   /**
     * Returns the DbFile that can be used to read the contents of the
