@@ -30,7 +30,7 @@ class TupleDesc(val types: Array[Type], val fields: Array[String]) {
   /**
     * @return the number of fields in this TupleDesc
     */
-  def numFields = ???
+  def numFields: Int = ???
 
   /**
     * Gets the (possibly null) field name of the ith field of this TupleDesc.
