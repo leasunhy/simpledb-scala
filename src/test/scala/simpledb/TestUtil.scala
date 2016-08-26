@@ -119,147 +119,146 @@ object TestUtil {
 
       while (!matched && actual.hasNext())
         matched = compareTuples(expectedTuple, actual.next())
+    }
+    if (!matched)
+      throw new RuntimeException("Expected tuple not found: " + expectedTuple)
+  }
 
-      if (!matched)
-        throw new RuntimeException("Expected tuple not found: " + expectedTuple)
+  /**
+    * Verifies that the DbIterator has been exhausted of all elements.
+    */
+  def readFileBytes(path: String): Array[Byte] = {
+    val f = new File(path)
+    val is = new FileInputStream(f)
+    val buf = Array.ofDim[Byte](f.length().toInt)
+
+    var offset = 0
+    var count = 0
+    while (offset < buf.length) {
+      count = is.read(buf, offset, buf.length - offset)
+      if (count >= 0)
+        offset += count
     }
 
-    /**
-      * Verifies that the DbIterator has been exhausted of all elements.
-      */
-    def readFileBytes(path: String): Array[Byte] = {
-      val f = new File(path)
-      val is = new FileInputStream(f)
-      val buf = Array.ofDim[Byte](f.length().toInt)
+    // check that we grabbed the entire file
+    if (offset < buf.length)
+      throw new IOException("failed to read test data")
 
-      var offset = 0
-      var count = 0
-      while (offset < buf.length) {
-        count = is.read(buf, offset, buf.length - offset)
-        if (count >= 0)
-          offset += count
+    // Close the input stream and return bytes
+    is.close()
+    buf
+  }
+
+  /**
+    * Stub DbFile class for unit testing.
+    */
+  class SkeletonFile(tableId: Int, td: TupleDesc) extends DbFile {
+    override def readPage(id: PageId): Page = ???
+
+    override def writePage(p: Page): Unit = ???
+
+    override def addTuple(tid: TransactionId, t: Tuple): Vector[Page] = ???
+
+    override def iterator(tid: TransactionId): DbFileIterator = ???
+
+    override def getId: Int = tableId
+
+    override def getTupleDesc: TupleDesc = td
+  }
+
+  /**
+    * Mock SeqScan class for unit testing.
+    */
+  class MockScan(low: Int, high: Int, width: Int) extends DbIterator {
+    var cur = low
+
+    override def open(): Unit = {}
+
+    override def hasNext(): Boolean = cur < high
+
+    override def next(): Tuple = {
+      if (cur >= high)
+        throw new NoSuchElementException()
+      val t = new Tuple(getTupleDesc)
+      for (i <- 0 until width)
+        t.setField(i, new IntField(cur))
+      cur += 1
+      t
+    }
+
+    override def rewind(): Unit = cur = low
+
+    override def getTupleDesc: TupleDesc = Utility.getTupleDesc(width)
+
+    override def close(): Unit = {}
+  }
+
+  /**
+    * Helper class that attempts to acquire a lock on a given page in a new
+    * thread.
+    *
+    * @return a handle to the Thread that will attempt lock acquisition after it
+    *   has been started
+    * @constructor Constructor.
+    * @param tid the transaction on whose behalf we want to acquire the lock
+    * @param pid the page over which we want to acquire the lock
+    * @param perm the desired lock permissions
+    */
+  class LockGrabber(tid: TransactionId, pid: PageId, perm: Permissions) extends Thread {
+    private var acquired = false
+    private var error: Exception = _
+    private val alock = new Object
+    private val elock = new Object
+
+    override def run(): Unit = {
+      try {
+        Database.getBufferPool.getPage(tid, pid, perm)
+        alock.synchronized { acquired = true }
+      } catch {
+        case e: Exception =>
+          e.printStackTrace()
+          elock.synchronized { error = e }
+          try {
+            Database.getBufferPool.transactionComplete(tid, false)
+          } catch {
+            case e2: IOException => e.printStackTrace()
+          }
       }
-
-      // check that we grabbed the entire file
-      if (offset < buf.length)
-        throw new IOException("failed to read test data")
-
-      // Close the input stream and return bytes
-      is.close()
-      buf
     }
 
     /**
-      * Stub DbFile class for unit testing.
+      * @return true if we successfully acquired the specified lock
       */
-    class SkeletonFile(tableId: Int, td: TupleDesc) extends DbFile {
-      override def readPage(id: PageId): Page = ???
-
-      override def writePage(p: Page): Unit = ???
-
-      override def addTuple(tid: TransactionId, t: Tuple): Vector[Page] = ???
-
-      override def iterator(tid: TransactionId): DbFileIterator = ???
-
-      override def getId: Int = tableId
-
-      override def getTupleDesc: TupleDesc = td
-    }
+    def getAcquired = alock.synchronized { acquired }
 
     /**
-      * Mock SeqScan class for unit testing.
+      * @return an Exception instance if one occurred during lock acquisition;
+      *   null otherwise
       */
-    class MockScan(low: Int, high: Int, width: Int) extends DbIterator {
-      var cur = low
+    def getError = elock.synchronized { error }
+  }
 
-      override def open(): Unit = {}
 
-      override def hasNext(): Boolean = cur < high
+  /** JUnit fixture that creates a heap file and cleans it up afterward. */
+  abstract class CreateHeapFile protected() {
+    protected var empty: HeapFile = _
 
-      override def next(): Tuple = {
-        if (cur >= high)
-          throw new NoSuchElementException()
-        val t = new Tuple(getTupleDesc)
-        for (i <- 0 until width)
-          t.setField(i, new IntField(cur))
-        cur += 1
-        t
-      }
-
-      override def rewind(): Unit = cur = low
-
-      override def getTupleDesc: TupleDesc = Utility.getTupleDesc(width)
-
-      override def close(): Unit = {}
+    private final val emptyFile = try {
+      File.createTempFile("empty", ".dat")
+    } catch {
+      case e: IOException =>
+        throw new RuntimeException(e)
+        null
     }
+    emptyFile.deleteOnExit()
 
-    /**
-      * Helper class that attempts to acquire a lock on a given page in a new
-      * thread.
-      *
-      * @return a handle to the Thread that will attempt lock acquisition after it
-      *   has been started
-      * @constructor Constructor.
-      * @param tid the transaction on whose behalf we want to acquire the lock
-      * @param pid the page over which we want to acquire the lock
-      * @param perm the desired lock permissions
-      */
-    class LockGrabber(tid: TransactionId, pid: PageId, perm: Permissions) extends Thread {
-      private var acquired = false
-      private var error: Exception = _
-      private val alock = new Object
-      private val elock = new Object
-
-      override def run(): Unit = {
-        try {
-          Database.getBufferPool.getPage(tid, pid, perm)
-          alock.synchronized { acquired = true }
-        } catch {
-          case e: Exception =>
-            e.printStackTrace()
-            elock.synchronized { error = e }
-            try {
-              Database.getBufferPool.transactionComplete(tid, false)
-            } catch {
-              case e2: IOException => e.printStackTrace()
-            }
-        }
-      }
-
-      /**
-        * @return true if we successfully acquired the specified lock
-        */
-      def getAcquired = alock.synchronized { acquired }
-
-      /**
-        * @return an Exception instance if one occurred during lock acquisition;
-        *   null otherwise
-        */
-      def getError = elock.synchronized { error }
-    }
-
-
-    /** JUnit fixture that creates a heap file and cleans it up afterward. */
-    abstract class CreateHeapFile protected() {
-      protected var empty: HeapFile = _
-
-      private final val emptyFile = try {
-        File.createTempFile("empty", ".dat")
+    protected def setUp(): Unit = {
+      try {
+        Database.reset()
+        empty = Utility.createEmptyHeapFile(emptyFile.getAbsolutePath, 2)
       } catch {
         case e: IOException =>
           throw new RuntimeException(e)
-          null
-      }
-      emptyFile.deleteOnExit()
-
-      protected def setUp(): Unit = {
-        try {
-          Database.reset()
-          empty = Utility.createEmptyHeapFile(emptyFile.getAbsolutePath, 2)
-        } catch {
-          case e: IOException =>
-            throw new RuntimeException(e)
-        }
       }
     }
   }
