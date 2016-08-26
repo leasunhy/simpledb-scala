@@ -4,10 +4,12 @@ import simpledb.systemtest.SimpleDbTestBase
 
 class TupleDescTest extends SimpleDbTestBase {
   private def combinedStringArrays(td1: TupleDesc, td2: TupleDesc, combined: TupleDesc): Boolean = {
-    (0 until td1.numFields).foreach(i => assert(td1.getType(i) === combined.getType(i)))
-    (td1.numFields until (td1.numFields + td2.numFields)).foreach {
-      i => assert(td2.getType(i - td1.numFields) === combined.getType(i))
-    }
+    if (!(0 until td1.numFields).forall(i => td1.getType(i) == combined.getType(i)))
+      false
+    else
+      (td1.numFields until (td1.numFields + td2.numFields)).forall {
+        i => td2.getType(i - td1.numFields) == combined.getType(i)
+      }
   }
 
   "TupleDesc" should "implement combine()" in {

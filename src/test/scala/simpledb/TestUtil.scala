@@ -119,9 +119,9 @@ object TestUtil {
 
       while (!matched && actual.hasNext())
         matched = compareTuples(expectedTuple, actual.next())
+      if (!matched)
+        throw new RuntimeException("Expected tuple not found: " + expectedTuple)
     }
-    if (!matched)
-      throw new RuntimeException("Expected tuple not found: " + expectedTuple)
   }
 
   /**
