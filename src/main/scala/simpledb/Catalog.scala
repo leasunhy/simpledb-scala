@@ -99,7 +99,7 @@ class Catalog {
         case e: IOException =>
           e.printStackTrace()
           System.exit(0)
-        case IndexOutOfBoundsException =>
+        case e: IndexOutOfBoundsException =>
           println("Invalid catalog entry : " + line)
       }
     }

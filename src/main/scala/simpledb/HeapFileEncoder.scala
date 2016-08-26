@@ -88,7 +88,7 @@ object HeapFileEncoder {
       var headerByte = 0.toByte
       while (i < nHeaderBits) {
         if (i < recordCount)
-          headerByte |= (1 << (i % 8))
+          headerByte |= (1 << (i % 8)).toByte
         if ((i + 1) % 8 == 0) {
           headerStream.writeByte(headerByte)
           headerByte = 0
@@ -130,7 +130,7 @@ object HeapFileEncoder {
           try {
             pageStream.writeInt(field.toInt)
           } catch {
-            case NumberFormatException => System.out.println("BAD LINE : " + field)
+            case e: NumberFormatException => System.out.println("BAD LINE : " + field)
           }
         case (Type.StringType, field) =>
           val overflow = Type.StringType.STRING_LEN - field.length

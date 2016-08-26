@@ -60,7 +60,7 @@ object SimpleDb {
           val m = c.getMethod("main", s)
           m.invoke(null, newArgs)
         } catch {
-          case Exception =>
+          case _: Exception =>
             System.out.println("Class Parser not found -- perhaps you are trying to run the parser as a part of lab1?")
         }
       case _ =>

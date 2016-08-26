@@ -40,7 +40,7 @@ object Type {
       try {
         new IntField(dis.readInt())
       } catch {
-        case IOException => throw new ParseException("Couldn't parse", 0)
+        case _: IOException => throw new ParseException("Couldn't parse", 0)
       }
     }
   }
@@ -71,7 +71,7 @@ object Type {
         dis.skipBytes(STRING_LEN - strLen)
         new StringField(new String(bs), STRING_LEN)
       } catch {
-        case IOException => throw new ParseException("Couldn't parse", 0)
+        case _: IOException => throw new ParseException("Couldn't parse", 0)
       }
     }
   }

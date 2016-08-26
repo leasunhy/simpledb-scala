@@ -117,7 +117,7 @@ class LogFile(logFile: File) {
     * the log to disk, and perform a rollback
     * @param tid The aborting transaction.
     */
-  def logAbort(tid: TransactionId): Unit = Database.getBufferPool.syncronized {
+  def logAbort(tid: TransactionId): Unit = Database.getBufferPool.synchronized {
     this.synchronized {
       preAppend()
       // Debug.log("ABORT")
@@ -218,7 +218,7 @@ class LogFile(logFile: File) {
 
       val idConsts = idClass.getDeclaredConstructors
       val numIdArgs = raf.readInt()
-      val idArgs = Array.fill[Object](numIdArgs, new Integer(raf.readInt))
+      val idArgs = Array.fill[Object](numIdArgs)(new Integer(raf.readInt))
       val pid = idConsts(0).newInstance(idArgs).asInstanceOf[PageId]
 
       val pageConsts = pageClass.getDeclaredConstructors
@@ -266,14 +266,14 @@ class LogFile(logFile: File) {
   }
 
   /** Checkpoint the log and write a checkpoint record. */
-  def logCheckpoint(): Unit = Database.getBufferPool().synchronized {
+  def logCheckpoint(): Unit = Database.getBufferPool.synchronized {
     // make sure we have buffer pool lock before proceeding
     this.synchronized {
       preAppend()
       val keys = tidToFirstLogRecord.keySet
       val els = keys.iterator
       force()
-      Database.getBufferPool().flushAllPages()
+      Database.getBufferPool.flushAllPages()
       val startCpOffset = raf.getFilePointer
       raf.writeInt(LogFile.CHECKPOINT_RECORD)
       raf.writeLong(-1)  // no tid, but leave space for convenience
@@ -284,7 +284,8 @@ class LogFile(logFile: File) {
         val key = els.next
         Debug.log("WRITING CHECKPOINT TRANSACTION ID: " + key)
         raf.writeLong(key)
-        raf.writeLong(tidToFirstLogRecord.getOrElse(key, null))
+        // TODO
+        tidToFirstLogRecord.get(key).foreach(raf.writeLong)
       }
 
       // once the CP is written, make sure the CP location at the beginning of the log file is updated
@@ -368,7 +369,7 @@ class LogFile(logFile: File) {
         logNew.writeLong(newStart)
         raf.readLong()
       } catch {
-        case EOFException => continue = false
+        case _: EOFException => continue = false
       }
     }
 
@@ -392,7 +393,7 @@ class LogFile(logFile: File) {
     *
     * @param tid The transaction to rollback
     */
-  def rollback(tid: TransactionId): Unit = Database.getBufferPool().syncronized {
+  def rollback(tid: TransactionId): Unit = Database.getBufferPool.synchronized {
     this.synchronized {
       preAppend()
       // TODO
@@ -419,7 +420,7 @@ class LogFile(logFile: File) {
     * committed transactions are installed and that the
     * updates of uncommitted transactions are not installed.
     */
-  def recover(): Unit = Database.getBufferPool().syncronized {
+  def recover(): Unit = Database.getBufferPool.synchronized {
     recoveryUndecided = false;
     // TODO
     ???

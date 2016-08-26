@@ -95,7 +95,7 @@ object Utility {
     val page = try {
        new HeapPage(pid, HeapPage.createEmptyPageData())
     } catch {
-      case IOException =>
+      case _: IOException =>
         throw new RuntimeException("failed to create empty page in HeapFile")
         null
     }
