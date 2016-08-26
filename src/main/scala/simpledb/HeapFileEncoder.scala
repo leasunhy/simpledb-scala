@@ -88,7 +88,7 @@ object HeapFileEncoder {
       var headerByte = 0.toByte
       while (i < nHeaderBits) {
         if (i < recordCount)
-          headerByte |= (1 << (i % 8)).toByte
+          headerByte = (headerByte | (1 << (i % 8))).toByte
         if ((i + 1) % 8 == 0) {
           headerStream.writeByte(headerByte)
           headerByte = 0
