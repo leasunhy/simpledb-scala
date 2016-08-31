@@ -52,6 +52,7 @@ class HeapFileReadTest extends SimpleDbTestBase {
   }
 
   it should "implement close() of iterator" in {
+    // make more than 1 page. Previous closed iterator would start fetching from page 1.
     val twoPageFile = SystemTestUtil.createRandomHeapFile(2, 520, null, null)
     val it = twoPageFile.iterator(tid)
     it.open()
