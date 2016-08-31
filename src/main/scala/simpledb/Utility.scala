@@ -124,6 +124,6 @@ object Utility {
     hf
   }
 
-  def listToString(list: IndexedSeq[Integer]): String = list.mkString("\t")
+  def listToString(list: IndexedSeq[Int]): String = list.mkString("\t")
 }
 
