@@ -1,6 +1,6 @@
 package simpledb
 
-import simpledb.systemtest.SimpleDbTestBase
+import simpledb.systemtest.{SimpleDbTestBase, SystemTestUtil}
 
 class HeapFileReadTest extends SimpleDbTestBase {
   var hf: HeapFile = _
