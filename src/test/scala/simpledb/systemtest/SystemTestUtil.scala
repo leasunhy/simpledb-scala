@@ -5,6 +5,7 @@ import java.util.UUID
 
 import simpledb._
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
@@ -16,7 +17,7 @@ object SystemTestUtil {
   def createRandomHeapFile(columns: Int,
                            rows: Int,
                            columnSpecification: Map[Int, Int],
-                           tuples: IndexedSeq[IndexedSeq[Int]],
+                           tuples: mutable.Buffer[IndexedSeq[Int]],
                            maxValue: Int = MAX_RAND_VALUE,
                            colPrefix: String = null) = {
     val temp = createRandomHeapFileUnopened(columns, rows, columnSpecification, tuples, maxValue)
@@ -27,11 +28,14 @@ object SystemTestUtil {
   }
 
   def createRandomHeapFileUnopened(columns: Int, rows: Int, columnSpecification: Map[Int, Int],
-                                   tuples: IndexedSeq[IndexedSeq[Int]], maxValue: Int): File = {
+                                   tuples: ArrayBuffer[IndexedSeq[Int]], maxValue: Int): File = {
     val r = new Random()
-    val newTuples = columnSpecification match {
-      case null => ArrayBuffer.fill[Int](rows, columns){ r.nextInt(maxValue) }
-      case _    => ArrayBuffer.tabulate[Int](rows, columns){ (i, _) => columnSpecification.getOrElse(i, 0) }
+    if (tuples != null)
+      tuples.clear()
+    val newTuples = if (tuples == null) ArrayBuffer.empty[IndexedSeq[Int]] else tuples
+    tuples = columnSpecification match {
+      case null => ArrayBuffer.fill[Int](rows, columns) { r.nextInt(maxValue) }
+      case _ => ArrayBuffer.tabulate[Int](rows, columns) { (i, _) => columnSpecification.getOrElse(i, 0) }
     }
     // convert the tuple list to a heap file and open i
     val temp = File.createTempFile("table", ".dat")
