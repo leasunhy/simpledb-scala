@@ -28,7 +28,7 @@ object HeapFileEncoder {
     * @param numFields the number of fields in each input tuple
     * @throws IOException if the temporary/output file can't be opened
     */
-  def convert(tuples: IndexedSeq[IndexedSeq[Integer]], outFile: File, nPageBytes: Int, numFields: Int) {
+  def convert(tuples: IndexedSeq[IndexedSeq[Int]], outFile: File, nPageBytes: Int, numFields: Int) {
     val tempInput = File.createTempFile("tempTable", ".txt")
     tempInput.deleteOnExit()
     val bw = new BufferedWriter(new FileWriter(tempInput))

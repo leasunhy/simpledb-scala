@@ -1,7 +1,5 @@
 package simpledb
 
-import java.util._
-
 /**
   * DbIterator is the iterator interface that all SimpleDB operators should
   * implement.
@@ -11,7 +9,7 @@ import java.util._
   * child iterator open methods, and in a close method, an iterator
   * should call its children's close methods.
   */
-trait DbIterator {
+trait DbIterator extends Iterator[Tuple] {
   /**
     * Opens the iterator
     * @throws DbException when there are problems opening/accessing the database.
