@@ -11,15 +11,15 @@ import scala.util.Random
 
 object SystemTestUtil {
   val SINGLE_INT_DESCRIPTOR = new TupleDesc(Array(Type.IntType))
-  val MAX_RAND_VALUE = 1 << 16
+  val MAX_RAND_VALUE : Int = 1 << 16
 
   /** @param columnSpecification Mapping between column index and value. */
   def createRandomHeapFile(columns: Int,
                            rows: Int,
                            columnSpecification: Map[Int, Int],
-                           tuples: mutable.Buffer[IndexedSeq[Int]],
+                           tuples: ArrayBuffer[ArrayBuffer[Int]],
                            maxValue: Int = MAX_RAND_VALUE,
-                           colPrefix: String = null) = {
+                           colPrefix: String = null) : HeapFile = {
     val temp = createRandomHeapFileUnopened(columns, rows, columnSpecification, tuples, maxValue)
     if (colPrefix == null)
       Utility.openHeapFile(columns, temp)
@@ -28,14 +28,15 @@ object SystemTestUtil {
   }
 
   def createRandomHeapFileUnopened(columns: Int, rows: Int, columnSpecification: Map[Int, Int],
-                                   tuples: ArrayBuffer[IndexedSeq[Int]], maxValue: Int): File = {
+                                   tuples: ArrayBuffer[ArrayBuffer[Int]], maxValue: Int): File = {
     val r = new Random()
-    if (tuples != null)
+    val newTuples = columnSpecification match {
+        case null => ArrayBuffer.fill[Int](rows, columns) { r.nextInt(maxValue) }
+        case _ => ArrayBuffer.tabulate[Int](rows, columns) { (i, _) => columnSpecification.getOrElse(i, 0) }
+    }
+    if (tuples != null) {
       tuples.clear()
-    val newTuples = if (tuples == null) ArrayBuffer.empty[IndexedSeq[Int]] else tuples
-    tuples = columnSpecification match {
-      case null => ArrayBuffer.fill[Int](rows, columns) { r.nextInt(maxValue) }
-      case _ => ArrayBuffer.tabulate[Int](rows, columns) { (i, _) => columnSpecification.getOrElse(i, 0) }
+      tuples.appendAll(newTuples)
     }
     // convert the tuple list to a heap file and open i
     val temp = File.createTempFile("table", ".dat")
@@ -120,7 +121,7 @@ object SystemTestUtil {
     * ret[0] is true if the sequence is quadratic
     * ret[1] is the common difference of the sequence if ret[0] is true.
     * @param sequence
-    * @return ret[0] = true if sequence is quadratic(or sub-quadratic or linear), ret[1] = the coefficient of n^2
+    * @return ret[0] = true if sequence is quadratic(or sub-quadratic or linear), ret[1] = the coefficient of n^^2
     */
   def checkQuadratic(sequence: Array[Double]): (Boolean, Double) = {
     val ret = checkLinear(getDiff(sequence))
