@@ -1,6 +1,8 @@
 package simpledb
 
 import java.io._
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 
 /**
   * HeapFile is an implementation of a DbFile that stores a collection
@@ -15,15 +17,16 @@ import java.io._
   * @constructor Constructs a heap file backed by the specified file.
   */
 class HeapFile(f: File, td: TupleDesc) extends DbFile {
-  // TODO
-  ???
+  private val fileChannel = new FileInputStream(f).getChannel
+  private val fileSize = fileChannel.size()
+  private val buffer = ByteBuffer.allocate(BufferPool.PAGE_SIZE)
 
   /**
     * Returns the File backing this HeapFile on disk.
     *
     * @return the File backing this HeapFile on disk.
     */
-  def getFile: File = ???
+  def getFile: File = f
 
   /**
     * Returns an ID uniquely identifying this HeapFile. Implementation note:
@@ -34,25 +37,30 @@ class HeapFile(f: File, td: TupleDesc) extends DbFile {
     *
     * @return an ID uniquely identifying this HeapFile.
     */
-  def getId: Int = ???
+  def getId: Int = f.getAbsoluteFile.hashCode()
 
   /**
     * Returns the TupleDesc of the table stored in this DbFile.
     * @return TupleDesc of this DbFile.
     */
-  def getTupleDesc: TupleDesc = ???
+  def getTupleDesc: TupleDesc = td
 
   /**
     * Returns the number of pages in this HeapFile.
     */
-  def numPages: Int = ???
+  def numPages: Int = (fileSize / BufferPool.PAGE_SIZE).toInt
 
   /**
     * Read the specified page from disk.
     *
     * @throws IllegalArgumentException if the page does not exist in this file.
     */
-  override def readPage(id: PageId): Page = ???
+  override def readPage(id: PageId): Page = {
+    val offset = id.getPageNo * BufferPool.PAGE_SIZE
+    fileChannel.position(offset)
+    fileChannel.read(buffer)
+    new HeapPage(new HeapPageId(id.getTableId, id.getPageNo), buffer.array())
+  }
 
   /**
     * Push the specified page to disk.
@@ -86,14 +94,56 @@ class HeapFile(f: File, td: TupleDesc) extends DbFile {
     * @throws DbException if the tuple cannot be deleted or is not a member
     *                     of the file
     */
-  override def deleteTuple(tid: TransactionId, t: Tuple): Page = ???
+  override def deleteTuple(tid: TransactionId, t: Tuple) : Page = ???
 
-    /**
-     * Returns an iterator over all the tuples stored in this DbFile. The
-     * iterator must use {@link BufferPool#getPage}, rather than
-     * {@link #readPage} to iterate through the pages.
-     *
-     * @return an iterator over all the tuples stored in this DbFile.
-     */
-  override def iterator(tid: TransactionId): DbFileIterator = ???
+  /**
+    * Returns an iterator over all the tuples stored in this DbFile.
+    * The iterator must use {@link BufferPool#getPage}, rather than
+    * {@link #readPage} to iterator through the pages.
+    *
+    * @return an iterator over all the tuples stored in this DbFile.
+    */
+  override def iterator(tid: TransactionId): DbFileIterator = new DbFileIterator {
+    private var currentPageIterator: Iterator[Tuple] = _
+    private var pageIndex = -1
+
+    override def next(): Tuple = {
+      if (pageIndex == -1)
+        throw new NoSuchElementException("Iterator not opened.")
+      while (pageIndex < numPages && !currentPageIterator.hasNext) {
+        pageIndex += 1
+        changeIterator()
+      }
+      if (pageIndex >= numPages)
+        throw new NoSuchElementException("Iterator exhausted.")
+      currentPageIterator.next()
+    }
+
+    override def hasNext(): Boolean = pageIndex != -1 && (currentPageIterator.hasNext || pageIndex < numPages - 1)
+
+    override def close(): Unit = {
+      currentPageIterator = null
+      pageIndex = -1
+    }
+
+    override def rewind(): Unit = {
+      if (pageIndex == -1)
+        throw new DbException("Iterator not opened.")
+      pageIndex = 0
+      changeIterator()
+    }
+
+    override def open(): Unit = {
+      if (pageIndex != -1)
+        throw new DbException("Iterator already opened.")
+      if (numPages == 0) throw new DbException("The file is empty.")
+      pageIndex = 0
+      changeIterator()
+    }
+
+    private def changeIterator(): Unit = {
+      val page = Database.getBufferPool.getPage(tid, new HeapPageId(getId, pageIndex), Permissions.READ_ONLY)
+      currentPageIterator = page.asInstanceOf[HeapPage].iterator
+    }
+  }
 }
