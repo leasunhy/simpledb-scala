@@ -13,18 +13,18 @@ class TupleDescTest extends SimpleDbTestBase {
   }
 
   "TupleDesc" should "implement combine()" in {
-    def testCombine(td1: TupleDesc, td2: TupleDesc) = {
+    def testCombine(td1: TupleDesc, td2: TupleDesc, expectedNumFields: Int) = {
       val td3 = TupleDesc.combine(td1, td2)
-      assert(td3.numFields == 3)
-      assert(3 * Type.IntType.getLen === td3.getSize)
-      (0 until 3).foreach(i => assert(td3.getType(i) === Type.IntType))
+      assert(td3.numFields == expectedNumFields)
+      assert(expectedNumFields * Type.IntType.getLen === td3.getSize)
+      (0 until expectedNumFields).foreach(i => assert(td3.getType(i) === Type.IntType))
       assert(combinedStringArrays(td1, td2, td3))
     }
     val td1 = Utility.getTupleDesc(1, "td1")
     val td2 = Utility.getTupleDesc(2, "td2")
-    testCombine(td1, td2)
-    testCombine(td2, td1)
-    testCombine(td2, td2)
+    testCombine(td1, td2, 3)
+    testCombine(td2, td1, 3)
+    testCombine(td2, td2, 4)
   }
 
   it should "implement getType()" in {
