@@ -58,8 +58,9 @@ class HeapFile(f: File, td: TupleDesc) extends DbFile {
   override def readPage(id: PageId): Page = {
     val offset = id.getPageNo * BufferPool.PAGE_SIZE
     fileChannel.position(offset)
+    buffer.position(0)
     fileChannel.read(buffer)
-    new HeapPage(new HeapPageId(id.getTableId, id.getPageNo), buffer.array())
+    new HeapPage(new HeapPageId(id.getTableId, id.getPageNo), buffer.array().clone())
   }
 
   /**
@@ -110,11 +111,11 @@ class HeapFile(f: File, td: TupleDesc) extends DbFile {
     override def next(): Tuple = {
       if (pageIndex == -1)
         throw new NoSuchElementException("Iterator not opened.")
-      while (pageIndex < numPages && !currentPageIterator.hasNext) {
+      while (pageIndex < numPages - 1 && !currentPageIterator.hasNext) {
         pageIndex += 1
         changeIterator()
       }
-      if (pageIndex >= numPages)
+      if (pageIndex > numPages - 1)
         throw new NoSuchElementException("Iterator exhausted.")
       currentPageIterator.next()
     }
