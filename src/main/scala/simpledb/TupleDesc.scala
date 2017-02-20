@@ -45,7 +45,10 @@ class TupleDesc(val types: Array[Type], val fields: Array[String]) {
     * @return the index of the field that is first to have the given name.
     * @throws NoSuchElementException if no field with a matching name is found.
     */
-  def nameToId(name: String): Int = fields.indexOf(name)
+  def nameToId(name: String): Int = fields.indexOf(name) match {
+    case -1 => throw new NoSuchElementException()
+    case i => i
+  }
 
   /**
     * Gets the type of the ith field of this TupleDesc.
@@ -70,9 +73,10 @@ class TupleDesc(val types: Array[Type], val fields: Array[String]) {
     * @param o the Object to be compared for equality with this TupleDesc.
     * @return true if the object is equal to this TupleDesc.
     */
-  override def equals(o: scala.Any): Boolean = {
-    val other = o.asInstanceOf[TupleDesc]
-    getSize == other.getSize && (types, other.types).zipped.forall{ case (t1, t2) => t1 == t2 }
+  override def equals(o: scala.Any): Boolean = o match {
+    case null => false
+    case otd: TupleDesc => getSize == otd.getSize && (types, otd.types).zipped.forall{ case (t1, t2) => t1 == t2 }
+    case _ => false
   }
 
   /* If you want to use TypleDesc as keys for HashMap,
@@ -87,7 +91,7 @@ class TupleDesc(val types: Array[Type], val fields: Array[String]) {
     */
   override val toString: String = fields match {
     case null => types.mkString(", ")
-    case _ => (types, fields).zipped.flatMap{ case (t, n) => s"{t}({n})" }.mkString(", ")
+    case _ => (types, fields).zipped.map{ case (t, n) => s"${t}(${n})" }.mkString(", ")
   }
 }
 
