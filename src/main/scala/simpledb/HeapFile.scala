@@ -86,5 +86,14 @@ class HeapFile(f: File, td: TupleDesc) extends DbFile {
     * @throws DbException if the tuple cannot be deleted or is not a member
     *                     of the file
     */
+  override def deleteTuple(tid: TransactionId, t: Tuple): Page = ???
+
+    /**
+     * Returns an iterator over all the tuples stored in this DbFile. The
+     * iterator must use {@link BufferPool#getPage}, rather than
+     * {@link #readPage} to iterate through the pages.
+     *
+     * @return an iterator over all the tuples stored in this DbFile.
+     */
   override def iterator(tid: TransactionId): DbFileIterator = ???
 }
