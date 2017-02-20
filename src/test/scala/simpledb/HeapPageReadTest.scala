@@ -13,7 +13,8 @@ class HeapPageReadTest extends SimpleDbTestBase {
   val EXAMPLE_VALUES = HeapPageReadTest.EXAMPLE_VALUES
   val EXAMPLE_DATA = HeapPageReadTest.EXAMPLE_DATA
 
-  before {
+  override def beforeEachTest(): Unit = {
+    super.beforeEachTest()
     Database.getCatalog.addTable(new SkeletonFile(-1, Utility.getTupleDesc(2)), UUID.randomUUID().toString)
   }
 

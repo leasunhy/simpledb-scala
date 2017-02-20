@@ -7,7 +7,8 @@ class HeapFileReadTest extends SimpleDbTestBase {
   var td: TupleDesc = _
   var tid: TransactionId = _
 
-  before {
+  override def beforeEachTest(): Unit = {
+    super.beforeEachTest()
     val hf = SystemTestUtil.createRandomHeapFile(2, 20, null, null)
     val td = Utility.getTupleDesc(2)
     val tid = new TransactionId()

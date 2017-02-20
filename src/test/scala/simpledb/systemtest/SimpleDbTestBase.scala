@@ -7,5 +7,8 @@ abstract class SimpleDbTestBase extends FlatSpec with BeforeAndAfter {
   /** Reset the database before each test is run. */
   before {
     Database.reset()
+    beforeEachTest()
   }
+
+  def beforeEachTest(): Unit = {}
 }

@@ -8,7 +8,8 @@ class CatalogTest extends SimpleDbTestBase {
   val name = "test"
   var nameThisRun = ""
 
-  before {
+  override def beforeEachTest(): Unit = {
+    super.beforeEachTest()
     Database.getCatalog.clear()
     nameThisRun = UUID.randomUUID().toString
     Database.getCatalog.addTable(new TestUtil.SkeletonFile(-1, Utility.getTupleDesc(2)), nameThisRun)

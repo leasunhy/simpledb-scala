@@ -9,7 +9,9 @@ class RecordIdTest extends SimpleDbTestBase {
   var hrid3: RecordId = _
   var hrid4: RecordId = _
 
-  before {
+
+  override def beforeEachTest(): Unit = {
+    super.beforeEachTest()
     val hpid = new HeapPageId(-1, 2)
     val hpid2 = new HeapPageId(-1, 2)
     val hpid3 = new HeapPageId(-2, 2)
