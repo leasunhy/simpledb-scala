@@ -13,8 +13,8 @@ package simpledb
   * @param numPages Maximum number of pages in this buffer pool.
   */
 class BufferPool(numPages: Int) {
-  // TODO
-  ???
+  import scala.collection.mutable
+  private val pages = mutable.Map.empty[PageId, Page]
 
   /**
     * Retrieve the specified page with the associated permissions.
@@ -31,7 +31,15 @@ class BufferPool(numPages: Int) {
     * @param pid the ID of the requested page
     * @param perm the requested permissions on the page
     */
-  def getPage(tid: TransactionId, pid: PageId, perm: Permissions): Page = ???
+  def getPage(tid: TransactionId, pid: PageId, perm: Permissions): Page = pages.get(pid) match {
+    case None =>
+      val page = Database.getCatalog.getDbFile(pid.getTableId).readPage(pid)
+      if (pages.size > numPages)
+        throw new DbException("Insufficient space in BufferPool.")
+      else
+        page
+    case Some(p) => p
+  }
 
   /**
     * Releases the lock on a page.
