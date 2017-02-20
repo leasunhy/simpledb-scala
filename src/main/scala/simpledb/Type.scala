@@ -43,6 +43,8 @@ object Type {
         case _: IOException => throw new ParseException("Couldn't parse", 0)
       }
     }
+
+    override def toString: String = "Int"
   }
 
   /**
@@ -74,6 +76,8 @@ object Type {
         case _: IOException => throw new ParseException("Couldn't parse", 0)
       }
     }
+
+    override def toString: String = "String"
   }
 }
 
