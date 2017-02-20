@@ -9,9 +9,9 @@ class HeapFileReadTest extends SimpleDbTestBase {
 
   override def beforeEachTest(): Unit = {
     super.beforeEachTest()
-    val hf = SystemTestUtil.createRandomHeapFile(2, 20, null, null)
-    val td = Utility.getTupleDesc(2)
-    val tid = new TransactionId()
+    hf = SystemTestUtil.createRandomHeapFile(2, 20, null, null)
+    td = Utility.getTupleDesc(2)
+    tid = new TransactionId()
   }
 
   after {
@@ -36,7 +36,7 @@ class HeapFileReadTest extends SimpleDbTestBase {
   }
 
   it should "implement readPage()" in {
-    val smallFile = SystemTestUtil.createRandomHeapFile(1, 1, null, null)
+    val smallFile = SystemTestUtil.createRandomHeapFile(1, 3, null, null)
     val it = smallFile.iterator(tid)
     // not opened yet
     assert(!it.hasNext())

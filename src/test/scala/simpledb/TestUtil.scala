@@ -159,6 +159,8 @@ object TestUtil {
 
     override def addTuple(tid: TransactionId, t: Tuple): Vector[Page] = ???
 
+    override def deleteTuple(tid: TransactionId, t: Tuple): Page = ???
+
     override def iterator(tid: TransactionId): DbFileIterator = ???
 
     override def getId: Int = tableId
