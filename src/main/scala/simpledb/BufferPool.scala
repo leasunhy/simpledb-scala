@@ -34,10 +34,12 @@ class BufferPool(numPages: Int) {
   def getPage(tid: TransactionId, pid: PageId, perm: Permissions): Page = pages.get(pid) match {
     case None =>
       val page = Database.getCatalog.getDbFile(pid.getTableId).readPage(pid)
-      if (pages.size > numPages)
+      if (pages.size > numPages) {
         throw new DbException("Insufficient space in BufferPool.")
-      else
+      } else {
+        pages(pid) = page
         page
+      }
     case Some(p) => p
   }
 
@@ -57,7 +59,9 @@ class BufferPool(numPages: Int) {
     *
     * @param tid the ID of the transaction requesting the unlock
     */
-  def transactionComplete(tid: TransactionId): Unit = ???
+  def transactionComplete(tid: TransactionId): Unit = {
+    // TODO
+  }
 
   /** Return true if the specified transaction has a lock on the specified page */
   def holdsLock(tid: TransactionId, p: PageId): Boolean = ???
