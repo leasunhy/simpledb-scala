@@ -25,15 +25,18 @@ import java.util.NoSuchElementException
   * @see BufferPool#PAGE_SIZE
   */
 class HeapPage(id: HeapPageId, data: Array[Byte]) extends Page {
-  val pid = id
-  val td = Database.getCatalog.getTupleDesc(id.getTableId)
-  val numSlots = getNumTuples
-  val dis = new DataInputStream(new ByteArrayInputStream(data))
+  private val pid = id
+  private[HeapPage] val td = Database.getCatalog.getTupleDesc(id.getTableId)
+  private[HeapPage] val pageSize = data.length
+  private[HeapPage] val tupleSize = td.types.map(_.getLen).sum
+  private[HeapPage] val numSlots = (pageSize * 8) / (tupleSize * 8 + 1)
+
+  private val dis = new DataInputStream(new ByteArrayInputStream(data))
 
   // allocate and read the header slots of this page
-  val header = Array.fill[Byte](getHeaderSize)(dis.readByte)
+  private val header = Array.fill[Byte](getHeaderSize)(dis.readByte)
 
-  val tuples = try {
+  private[HeapPage] val tuples = try {
     // allocate and read the actual records of this page
     (0 until numSlots).map(readNextTuple(dis, _)).toArray
   } catch {
@@ -50,21 +53,13 @@ class HeapPage(id: HeapPageId, data: Array[Byte]) extends Page {
   /** Retrieve the number of tuples on this page.
         @return the number of tuples on this page
     */
-  private def getNumTuples: Int = {
-    // TODO
-    ???
-    0
-  }
+  private def getNumTuples: Int = ???
 
   /**
     * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
     * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
     */
-  private def getHeaderSize: Int = {
-    // TODO
-    ???
-    0
-  }
+  private def getHeaderSize: Int = (numSlots + 7) / 8
 
   /** Return a view of this page before it was modified -- used by recovery */
   def getBeforeImage: HeapPage = try {
@@ -82,10 +77,7 @@ class HeapPage(id: HeapPageId, data: Array[Byte]) extends Page {
   /**
     * @return the PageId associated with this page.
     */
-  def getId: HeapPageId = {
-    // TODO
-    ???
-  }
+  def getId: HeapPageId = pid
 
   /**
     * Suck up tuples from the source file.
@@ -204,12 +196,16 @@ class HeapPage(id: HeapPageId, data: Array[Byte]) extends Page {
   /**
     * Returns the number of empty slots on this page.
     */
-  def getNumEmptySlots: Int = ???
+  def getNumEmptySlots: Int = (0 until numSlots).map(i => if (!getSlot(i)) 1 else 0).sum
 
   /**
     * Returns true if associated slot on this page is filled.
     */
-  def getSlot(i: Int): Boolean = ???
+  def getSlot(i: Int): Boolean = {
+    val headerByteIndex = i / 8
+    val headerBitIndex = i % 8
+    ((header(headerByteIndex) >> headerBitIndex) & 1) == 1
+  }
 
   /**
     * Abstraction to fill or clear a slot on this page.
@@ -220,7 +216,22 @@ class HeapPage(id: HeapPageId, data: Array[Byte]) extends Page {
     * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
     * (note that this iterator shouldn't return tuples in empty slots!)
     */
-  def iterator: Iterator[Tuple] = ???
+  def iterator: Iterator[Tuple] = new HeapPageTupleIterator(this)
+
+  private class HeapPageTupleIterator(page: HeapPage) extends Iterator[Tuple] {
+    var index = 0
+
+    override def hasNext: Boolean = (index until page.numSlots).exists(page.getSlot)
+
+    override def next(): Tuple = {
+      while (index < page.numSlots && !getSlot(index))
+        index += 1
+      if (index >= page.numSlots) throw new NoSuchElementException()
+      val t = page.tuples(index)
+      index += 1
+      t
+    }
+  }
 }
 
 object HeapPage {
