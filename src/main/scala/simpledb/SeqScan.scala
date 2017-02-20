@@ -16,20 +16,28 @@ package simpledb
   *         name can be null.fieldName, tableAlias.null, or null.null).
   */
 class SeqScan(tid: TransactionId, tableid: Int, tableAlias: String) extends DbIterator {
-  // TODO
-  ???
+  private var iterator: DbFileIterator = _
+
+  private def withIteratorCheck[A](f: () => A): A = {
+    if (iterator == null)
+      throw new IllegalStateException("The iterator is not opened.")
+    f()
+  }
 
   /**
     * Opens the iterator
     *
     * @throws DbException when there are problems opening/accessing the database.
     */
-  override def open(): Unit = ???
+  override def open(): Unit = {
+    iterator = Database.getCatalog.getDbFile(tableid).iterator(tid)
+    iterator.open()
+  }
 
   /** @return true if there are more tuples available.
     * @throws IllegalStateException If the iterator has not been opened
     */
-  override def hasNext(): Boolean = ???
+  override def hasNext(): Boolean = withIteratorCheck{() => iterator.hasNext()}
 
   /**
     * Gets the next tuple from the operator (typically implementing by reading
@@ -39,7 +47,7 @@ class SeqScan(tid: TransactionId, tableid: Int, tableAlias: String) extends DbIt
     * @throws NoSuchElementException if there are no more tuples
     * @throws IllegalStateException  If the iterator has not been opened
     */
-  override def next(): Tuple = ???
+  override def next(): Tuple = withIteratorCheck{() => iterator.next()}
 
   /**
     * Resets the iterator to the start.
@@ -47,7 +55,7 @@ class SeqScan(tid: TransactionId, tableid: Int, tableAlias: String) extends DbIt
     * @throws DbException           When rewind is unsupported.
     * @throws IllegalStateException If the iterator has not been opened
     */
-  override def rewind(): Unit = ???
+  override def rewind(): Unit = withIteratorCheck{() => iterator.rewind()}
 
   /**
     * Returns the TupleDesc with field names from the underlying HeapFile,
@@ -55,11 +63,11 @@ class SeqScan(tid: TransactionId, tableid: Int, tableAlias: String) extends DbIt
     * @return the TupleDesc with field names from the underlying HeapFile,
     * prefixed with the tableAlias string from the constructor.
     */
-  override def getTupleDesc: TupleDesc = ???
+  override def getTupleDesc: TupleDesc = Database.getCatalog.getTupleDesc(tableid)
 
   /**
     * Closes the iterator.
     * When the iterator is closed, calling next(), hasNext(), or rewind() should fail by throwing IllegalStateException.
     */
-  override def close(): Unit = ???
+  override def close(): Unit = iterator = null
 }
