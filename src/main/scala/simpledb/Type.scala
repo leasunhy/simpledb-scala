@@ -43,10 +43,6 @@ object Type {
         case _: IOException => throw new ParseException("Couldn't parse", 0)
       }
     }
-
-    override def equals(obj: scala.Any): Boolean = obj.asInstanceOf[Type].hashCode() == hashCode()
-
-    override def hashCode(): Int = 1
   }
 
   /**
@@ -78,10 +74,6 @@ object Type {
         case _: IOException => throw new ParseException("Couldn't parse", 0)
       }
     }
-
-    override def equals(obj: scala.Any): Boolean = obj.asInstanceOf[Type].hashCode() == hashCode()
-
-    override def hashCode(): Int = 2
   }
 }
 
