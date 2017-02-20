@@ -137,7 +137,7 @@ object HeapFileEncoder {
           val s = if (overflow < 0) trimmedLine.substring(0, Type.StringType.STRING_LEN) else field
           pageStream.writeInt(s.length)
           pageStream.writeBytes(s)
-          (overflow until 0).foreach(_ => pageStream.writeByte(0))
+          (0 until overflow).foreach(_ => pageStream.writeByte(0))
       }
 
       // if we wrote a full page of records, or if we're done altogether,
@@ -153,7 +153,8 @@ object HeapFileEncoder {
         flush()
     }
 
-    flush()
+    if (pageStream.size() != 0 || nPages == 0)
+      flush()
 
     br.close()
     os.close()
