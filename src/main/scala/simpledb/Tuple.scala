@@ -10,25 +10,30 @@ package simpledb
   * instance with at least one field.
   */
 class Tuple(td: TupleDesc) {
-  // TODO
-  ???
+  private var recordId: RecordId = _
+  private val fields = Array.tabulate[Field](td.numFields){
+    i: Int => td.types(i) match {
+      case Type.IntType => new IntField(0)
+      case t@Type.StringType => new StringField("", t.getLen)
+    }
+  }
 
   /**
     * @return The TupleDesc representing the schema of this tuple.
     */
-  def getTupleDesc(): TupleDesc = ???
+  def getTupleDesc(): TupleDesc = td
 
   /**
     * @return The RecordId representing the location of this tuple on
     *   disk. May be null.
     */
-  def getRecordId(): RecordId = ???
+  def getRecordId(): RecordId = recordId
 
   /**
     * Set the RecordId information for this tuple.
     * @param rid the new RecordId for this tuple.
     */
-  def setRecordId(rid: RecordId): Unit = ???
+  def setRecordId(rid: RecordId): Unit = recordId = rid
 
   /**
     * Change the value of the ith field of this tuple.
@@ -36,14 +41,14 @@ class Tuple(td: TupleDesc) {
     * @param i index of the field to change. It must be a valid index.
     * @param f new value for the field.
     */
-  def setField(i: Int, f: Field): Unit = ???
+  def setField(i: Int, f: Field): Unit = fields(i) = f
 
   /**
     * @return the value of the ith field, or null if it has not been set.
     *
     * @param i field index to return. Must be a valid index.
     */
-  def getField(i: Int): Field = ???
+  def getField(i: Int): Field = fields(i)
 
   /**
     * Returns the contents of this Tuple as a string.
@@ -54,5 +59,5 @@ class Tuple(td: TupleDesc) {
     *
     * where \t is any whitespace, except newline, and \n is a newline
     */
-  override def toString: String = ???
+  override def toString: String = fields.mkString("", "\t", "\n")
 }
