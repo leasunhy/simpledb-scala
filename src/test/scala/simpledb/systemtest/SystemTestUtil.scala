@@ -88,7 +88,7 @@ object SystemTestUtil {
     val MAX_TUPLES_OUTPUT = 10
     val msg = "expected to find the following tuples:\n"
     val moreMsg = s"[${copy.size - MAX_TUPLES_OUTPUT} more tuples]"
-    val tupleMsg = copy.view.map(t => s"\t${Utility.listToString(t)}\n").mkString("")
+    val tupleMsg = copy.view.take(MAX_TUPLES_OUTPUT).map(t => s"\t${Utility.listToString(t)}\n").mkString("")
     assert(copy.isEmpty, msg + tupleMsg + moreMsg)
   }
 

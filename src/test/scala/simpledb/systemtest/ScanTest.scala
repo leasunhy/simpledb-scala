@@ -27,8 +27,9 @@ class ScanTest extends SimpleDbTestBase {
 
   /* Scan 1-4 columns. */
   "The system" should "be able to scan small tables correctly." in {
-    val columnSizes = Vector(1, 2, 3, 4)
-    val rowSizes = Vector(0, 1, 2, 511, 512, 513, 1023, 1024, 1025, 4096 + r.nextInt(4096))
+    val columnSizes = Array(1, 2, 3, 4)
+    val rowSizes = Array(0, 1, 2, 511, 512, 513, 1023, 1024, 1025, 4096 + r.nextInt(4096))
+    validateScan(columnSizes, rowSizes)
   }
 
   "A SeqScan iterator" should "work as expected." in {
