@@ -49,6 +49,15 @@ trait DbFile {
     * @throws DbException if the tuple cannot be deleted or is not a member
     *   of the file
     */
+  def deleteTuple(tid: TransactionId, t: Tuple): Page
+
+  /**
+    * Returns an iterator over all the tuples stored in this DbFile.
+    * The iterator must use {@link BufferPool#getPage}, rather than
+    * {@link #readPage} to iterator through the pages.
+    *
+    * @return an iterator over all the tuples stored in this DbFile.
+    */
   def iterator(tid: TransactionId): DbFileIterator
 
   /**
